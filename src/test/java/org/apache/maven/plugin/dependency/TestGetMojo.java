@@ -132,9 +132,9 @@ public class TestGetMojo
     {
         setVariableValueToObject( mojo, "remoteRepositories", "central::default::http://repo1.maven.apache.org/maven2,"
             + "central::::http://repo1.maven.apache.org/maven2," + "http://repo1.maven.apache.org/maven2" );
-        setVariableValueToObject( mojo, "groupId", "org.apache.maven" );
-        setVariableValueToObject( mojo, "artifactId", "maven-model" );
-        setVariableValueToObject( mojo, "version", "2.0.9" );
+        setVariableValueToObject( mojo, "groupId", "junit" );
+        setVariableValueToObject( mojo, "artifactId", "junit" );
+        setVariableValueToObject( mojo, "version", "[4.8,4.9)" );
 
         mojo.execute();
     }

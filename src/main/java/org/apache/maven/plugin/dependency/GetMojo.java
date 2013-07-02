@@ -22,6 +22,7 @@ package org.apache.maven.plugin.dependency;
 import org.apache.commons.io.FileUtils;
 import org.apache.maven.artifact.Artifact;
 import org.apache.maven.artifact.factory.ArtifactFactory;
+import org.apache.maven.artifact.metadata.ArtifactMetadataRetrievalException;
 import org.apache.maven.artifact.metadata.ArtifactMetadataSource;
 import org.apache.maven.artifact.repository.ArtifactRepository;
 import org.apache.maven.artifact.repository.ArtifactRepositoryFactory;
@@ -29,6 +30,8 @@ import org.apache.maven.artifact.repository.ArtifactRepositoryPolicy;
 import org.apache.maven.artifact.repository.layout.ArtifactRepositoryLayout;
 import org.apache.maven.artifact.resolver.AbstractArtifactResolutionException;
 import org.apache.maven.artifact.resolver.ArtifactResolver;
+import org.apache.maven.artifact.versioning.ArtifactVersion;
+import org.apache.maven.artifact.versioning.VersionRange;
 import org.apache.maven.plugin.AbstractMojo;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugin.MojoFailureException;
@@ -39,11 +42,7 @@ import org.codehaus.plexus.util.StringUtils;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -258,7 +257,7 @@ public class GetMojo
                                                                     always, always );
             repoList.add( remoteRepo );
         }
-
+        toDownload.setVersion(getVersionFromRange(toDownload, repoList));
         try
         {
             if ( transitive )
@@ -309,6 +308,31 @@ public class GetMojo
                         + " : " + e.getMessage(), e );
             }
         }
+    }
+
+    private String getVersionFromRange(Artifact toDownload, List<ArtifactRepository> repoList) {
+        getLog().error("VERSION: " + toDownload.getVersion());
+        VersionRange versionRange = toDownload.getVersionRange();
+        getLog().error("VERSION RANGE: " + toDownload.getVersionRange());
+        if (versionRange == null) {
+            return toDownload.getVersion();
+        }
+        ArtifactVersion finalVersion = null;
+        try {
+            List list = source.retrieveAvailableVersions(toDownload, localRepository, repoList);
+            getLog().error("AVAILABLE VERSIONS:");
+            for (Object ver : list) {
+                getLog().error("AVAILABLE VERSION: " + ver + " class: " + ver.getClass());
+            }
+            finalVersion = versionRange.matchVersion(list);
+            getLog().error("FINAL VERSION: " + finalVersion);
+        } catch (ArtifactMetadataRetrievalException e) {
+            getLog().error(e);
+        }
+        if (finalVersion == null) {
+            return versionRange.toString();
+        }
+        return finalVersion.toString();
     }
 
     ArtifactRepository parseRepository( String repo, ArtifactRepositoryPolicy policy )
